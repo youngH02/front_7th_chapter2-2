@@ -17,7 +17,17 @@ function updateAttributes(target, originNewProps, originOldProps) {
       const eventType = key.slice(2).toLowerCase();
       removeEvent(target, eventType, oldProps[key]);
     } else if (!(key in newProps)) {
-      if (key === "className") {
+      // boolean 속성은 property를 false로 설정
+      if (
+        key === "checked" ||
+        key === "disabled" ||
+        key === "selected" ||
+        key === "readOnly"
+      ) {
+        target[key] = false;
+      } else if (key === "value") {
+        target.value = "";
+      } else if (key === "className") {
         target.removeAttribute("class");
       } else {
         target.removeAttribute(key);
@@ -29,18 +39,18 @@ function updateAttributes(target, originNewProps, originOldProps) {
   Object.entries(newProps).forEach(([key, value]) => {
     const oldValue = oldProps[key];
 
-    // 값이 변경되지 않았으면 스킵
-    if (oldValue === value) return;
-
-    // 이벤트 리스너 처리
+    // 이벤트 리스너 처리 (항상 재등록)
     if (key.startsWith("on") && typeof value === "function") {
       const eventType = key.slice(2).toLowerCase();
-      if (oldValue) {
+      if (oldValue && oldValue !== value) {
         removeEvent(target, eventType, oldValue);
       }
       addEvent(target, eventType, value);
       return;
     }
+
+    // 값이 변경되지 않았으면 스킵
+    if (oldValue === value) return;
 
     // className 처리
     if (key === "className") {
@@ -53,6 +63,23 @@ function updateAttributes(target, originNewProps, originOldProps) {
       Object.entries(value).forEach(([styleName, styleValue]) => {
         target.style[styleName] = styleValue;
       });
+      return;
+    }
+
+    // boolean 속성은 property로 직접 설정
+    if (
+      key === "checked" ||
+      key === "disabled" ||
+      key === "selected" ||
+      key === "readOnly"
+    ) {
+      target[key] = !!value;
+      return;
+    }
+
+    // value 속성도 property로 직접 설정
+    if (key === "value") {
+      target.value = value;
       return;
     }
 

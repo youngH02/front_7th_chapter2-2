@@ -8,7 +8,9 @@
 export function createVNode(type, props, ...children) {
   return {
     type,
-    props: props || {},
-    children: children.flat(Infinity), // 중첩 배열을 평탄화
+    props, // props를 그대로 전달 (null일 수 있음)
+    children: children
+      .flat(Infinity) // 중첩 배열을 평탄화
+      .filter((child) => child != null && child !== false && child !== true), // boolean, null, undefined 제거
   };
 }

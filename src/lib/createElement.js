@@ -2,10 +2,19 @@ import { addEvent } from "./eventManager";
 
 /**
  * VNode를 실제 DOM 요소로 변환합니다.
- * @param {object|string} vNode - Virtual DOM 노드
+ * @param {object|string|array} vNode - Virtual DOM 노드 또는 배열
  * @returns {Node} 생성된 DOM 노드
  */
 export function createElement(vNode) {
+  // 배열인 경우 DocumentFragment 생성
+  if (Array.isArray(vNode)) {
+    const fragment = document.createDocumentFragment();
+    vNode.forEach((child) => {
+      fragment.appendChild(createElement(child));
+    });
+    return fragment;
+  }
+
   // 텍스트 노드인 경우
   if (typeof vNode === "string" || typeof vNode === "number") {
     return document.createTextNode(String(vNode));
@@ -59,6 +68,23 @@ function updateAttributes($el, props) {
       Object.entries(value).forEach(([styleName, styleValue]) => {
         $el.style[styleName] = styleValue;
       });
+      return;
+    }
+
+    // boolean 속성은 property로 직접 설정
+    if (
+      key === "checked" ||
+      key === "disabled" ||
+      key === "selected" ||
+      key === "readOnly"
+    ) {
+      $el[key] = !!value;
+      return;
+    }
+
+    // value 속성도 property로 직접 설정
+    if (key === "value") {
+      $el.value = value;
       return;
     }
 
