@@ -12,9 +12,11 @@ export const setDomProps = (dom: HTMLElement, props: Record<string, any>): void 
     if (key.startsWith("on") && typeof props[key] === "function") {
       dom.addEventListener(key.slice(2).toLowerCase(), props[key]);
     } else if (key === "className") {
-      dom.className = props[key];
+      dom.className = props[key] ?? "";
     } else if (key === "style" && typeof props[key] === "object") {
       Object.assign(dom.style, props[key]);
+    } else if (["checked", "disabled", "readOnly"].includes(key)) {
+      (dom as any)[key] = !!props[key];
     } else {
       dom.setAttribute(key, props[key]);
     }
@@ -39,6 +41,13 @@ export const updateDomProps = (
       } else {
         dom.removeAttribute(key);
       }
+    }
+    // 값이 변경된 이벤트 핸들러는 remove 후 add
+    if (key.startsWith("on") && typeof prevProps[key] === "function" && prevProps[key] !== nextProps[key]) {
+      dom.removeEventListener(key.slice(2).toLowerCase(), prevProps[key]);
+    }
+    if (key === "className" && prevProps[key] !== nextProps[key]) {
+      dom.className = nextProps[key] ?? "";
     }
   }
   // 추가/업데이트

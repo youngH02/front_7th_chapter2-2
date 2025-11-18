@@ -106,13 +106,14 @@ export const createElement = (
   const props = originProps ?? {};
   const { key, children: propsChildren, ...rest } = props;
   const childCandidates = rawChildren.length > 0 ? rawChildren : propsChildren !== undefined ? [propsChildren] : [];
+  const normalizedChildren = normalizeChildren(childCandidates);
 
   return {
     type,
-    key: key != null ? String(key) : null,
+    key: key != null ? key : null,
     props: {
       ...rest,
-      children: normalizeChildren(childCandidates),
+      ...(normalizedChildren.length > 0 ? { children: normalizedChildren } : {}),
     },
   };
 };
