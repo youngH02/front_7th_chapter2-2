@@ -13,13 +13,36 @@ export const setDomProps = (dom: HTMLElement, props: Record<string, any>): void 
       dom.addEventListener(key.slice(2).toLowerCase(), props[key]);
     } else if (key === "className") {
       dom.className = props[key] ?? "";
-    } else if (key === "style" && typeof props[key] === "object") {
-      Object.assign(dom.style, props[key]);
+    } else if (key === "style" && typeof props[key] === "object" && props[key] !== null) {
+      diffStyle(dom, {}, props[key]);
+      continue;
     } else if (["checked", "disabled", "readOnly"].includes(key)) {
       (dom as any)[key] = !!props[key];
     } else {
       dom.setAttribute(key, props[key]);
     }
+  }
+};
+
+type StyleMap = Record<string, string | number>;
+
+const diffStyle = (dom: HTMLElement, prev?: StyleMap, next?: StyleMap) => {
+  if (prev === next) return;
+  prev = prev || {};
+  next = next || {};
+  // 제거
+  for (const key in prev) {
+    if (!(key in next)) {
+      dom.style[key as any] = "";
+    }
+  }
+  // 추가/업데이트
+  applyStyle(dom, next);
+};
+
+const applyStyle = (dom: HTMLElement, style: StyleMap = {}) => {
+  for (const key in style) {
+    dom.style[key as any] = style[key] == null ? "" : String(style[key]);
   }
 };
 
@@ -32,26 +55,82 @@ export const updateDomProps = (
   prevProps: Record<string, any> = {},
   nextProps: Record<string, any> = {},
 ): void => {
+  const prevStyle = prevProps.style && typeof prevProps.style === "object" ? (prevProps.style as StyleMap) : undefined;
+  const nextStyle = nextProps.style && typeof nextProps.style === "object" ? (nextProps.style as StyleMap) : undefined;
   // 제거/변경
   for (const key in prevProps) {
     if (key === "children") continue;
+    const prevValue = prevProps[key];
+    const nextValue = nextProps[key];
+
+    if (key === "style") {
+      if (prevStyle && !nextStyle) {
+        diffStyle(dom, prevStyle, {});
+      }
+      continue;
+    }
+
+    if (key.startsWith("on") && typeof prevValue === "function") {
+      if (prevValue !== nextValue) {
+        dom.removeEventListener(key.slice(2).toLowerCase(), prevValue);
+      }
+      continue;
+    }
+
     if (!(key in nextProps)) {
-      if (key.startsWith("on") && typeof prevProps[key] === "function") {
-        dom.removeEventListener(key.slice(2).toLowerCase(), prevProps[key]);
+      if (key === "className") {
+        dom.className = "";
+      } else if (["checked", "disabled", "readOnly"].includes(key)) {
+        (dom as any)[key] = false;
+        dom.removeAttribute(key);
       } else {
         dom.removeAttribute(key);
       }
     }
-    // 값이 변경된 이벤트 핸들러는 remove 후 add
-    if (key.startsWith("on") && typeof prevProps[key] === "function" && prevProps[key] !== nextProps[key]) {
-      dom.removeEventListener(key.slice(2).toLowerCase(), prevProps[key]);
+  }
+
+  if (nextStyle) {
+    diffStyle(dom, prevStyle ?? {}, nextStyle);
+  }
+
+  // 추가/업데이트
+  for (const key in nextProps) {
+    if (key === "children" || key === "style") continue;
+    const value = nextProps[key];
+
+    if (key.startsWith("on") && typeof value === "function") {
+      const prevValue = prevProps[key];
+      if (prevValue !== value) {
+        if (typeof prevValue === "function") {
+          dom.removeEventListener(key.slice(2).toLowerCase(), prevValue);
+        }
+        dom.addEventListener(key.slice(2).toLowerCase(), value);
+      }
+      continue;
     }
-    if (key === "className" && prevProps[key] !== nextProps[key]) {
-      dom.className = nextProps[key] ?? "";
+
+    if (key === "className") {
+      dom.className = value ?? "";
+      continue;
+    }
+
+    if (["checked", "disabled", "readOnly"].includes(key)) {
+      const boolValue = !!value;
+      (dom as any)[key] = boolValue;
+      if (boolValue) {
+        dom.setAttribute(key, "");
+      } else {
+        dom.removeAttribute(key);
+      }
+      continue;
+    }
+
+    if (value == null) {
+      dom.removeAttribute(key);
+    } else {
+      dom.setAttribute(key, String(value));
     }
   }
-  // 추가/업데이트
-  setDomProps(dom, nextProps);
 };
 
 /**
