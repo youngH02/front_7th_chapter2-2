@@ -13,8 +13,10 @@ export const context: Context = {
     node: null,
     instance: null,
     reset({ container, node }) {
-      // 여기를 구현하세요.
       // container, node, instance를 전달받은 값으로 초기화합니다.
+      this.container = container;
+      this.node = node;
+      this.instance = null;
     },
   },
 
@@ -32,8 +34,11 @@ export const context: Context = {
      * 모든 훅 관련 상태를 초기화합니다.
      */
     clear() {
-      // 여기를 구현하세요.
       // state, cursor, visited, componentStack을 모두 비웁니다.
+      this.state.clear();
+      this.cursor.clear();
+      this.visited.clear();
+      this.componentStack.length = 0;
     },
 
     /**

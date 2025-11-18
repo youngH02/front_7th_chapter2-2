@@ -87,12 +87,10 @@ export const normalizeNode = (node: VNode): VNode | null => {
  * 텍스트 노드를 위한 VNode를 생성합니다.
  */
 const createTextElement = (node: VNode): VNode => {
-  const raw = node as unknown;
-  const value = typeof raw === "string" || typeof raw === "number" ? raw : "";
   return {
     type: TEXT_ELEMENT,
     key: null,
-    props: { nodeValue: String(value), children: [] },
+    props: { nodeValue: String(node), children: [] },
   };
 };
 
