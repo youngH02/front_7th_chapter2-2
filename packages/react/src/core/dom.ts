@@ -16,8 +16,10 @@ export const setDomProps = (dom: HTMLElement, props: Record<string, any>): void 
     } else if (key === "style" && typeof props[key] === "object" && props[key] !== null) {
       diffStyle(dom, {}, props[key]);
       continue;
-    } else if (["checked", "disabled", "readOnly"].includes(key)) {
+    } else if (["checked", "disabled", "readOnly", "selected"].includes(key)) {
       (dom as any)[key] = !!props[key];
+    } else if (key === "value") {
+      (dom as any).value = props[key] ?? "";
     } else {
       dom.setAttribute(key, props[key]);
     }
@@ -80,9 +82,11 @@ export const updateDomProps = (
     if (!(key in nextProps)) {
       if (key === "className") {
         dom.className = "";
-      } else if (["checked", "disabled", "readOnly"].includes(key)) {
+      } else if (["checked", "disabled", "readOnly", "selected"].includes(key)) {
         (dom as any)[key] = false;
         dom.removeAttribute(key);
+      } else if (key === "value") {
+        (dom as any).value = "";
       } else {
         dom.removeAttribute(key);
       }
@@ -114,7 +118,7 @@ export const updateDomProps = (
       continue;
     }
 
-    if (["checked", "disabled", "readOnly"].includes(key)) {
+    if (["checked", "disabled", "readOnly", "selected"].includes(key)) {
       const boolValue = !!value;
       (dom as any)[key] = boolValue;
       if (boolValue) {
@@ -122,6 +126,11 @@ export const updateDomProps = (
       } else {
         dom.removeAttribute(key);
       }
+      continue;
+    }
+
+    if (key === "value") {
+      (dom as any).value = value ?? "";
       continue;
     }
 
