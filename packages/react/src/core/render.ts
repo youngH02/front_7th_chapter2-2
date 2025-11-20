@@ -1,4 +1,4 @@
-import { withEnqueue } from "../utils";
+import { enqueue, withEnqueue } from "../utils";
 import { context } from "./context";
 import { cleanupUnusedHooks } from "./hooks";
 import { reconcile } from "./reconciler";
@@ -18,9 +18,13 @@ export const render = (): void => {
   context.hooks.visited.clear();
   context.hooks.cursor.clear();
 
-  reconcile(context.root.container, context.root.instance, context.root.node, "");
+  context.root.instance = reconcile(context.root.container, context.root.instance, context.root.node, "");
 
   cleanupUnusedHooks();
+
+  const effects = context.effects.queue.slice();
+  context.effects.queue = [];
+  effects.forEach(enqueue);
 };
 
 /**
